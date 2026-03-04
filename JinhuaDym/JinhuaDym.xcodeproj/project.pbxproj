@@ -233,6 +233,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = JinhuaDym/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dynamic Slot Evolution";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We will use your data to enhance your user experience and provide personalized advertising services";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -244,7 +245,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vnsje.JinhuaDym;
+				PRODUCT_BUNDLE_IDENTIFIER = com.evo.DynamicEvolution;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -270,6 +271,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = JinhuaDym/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dynamic Slot Evolution";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We will use your data to enhance your user experience and provide personalized advertising services";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -281,7 +283,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vnsje.JinhuaDym;
+				PRODUCT_BUNDLE_IDENTIFIER = com.evo.DynamicEvolution;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

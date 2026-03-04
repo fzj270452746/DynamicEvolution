@@ -430,7 +430,7 @@ extension PenumbraSheet {
         stack.addArrangedSubview(headingLbl)
 
         let instructions = [
-            "Tap INVOKE to fill empty slots with symbols.",
+            "Tap SPIN to fill empty slots with symbols.",
             "3 matching symbols fuse into a higher tier.",
             "Fused slots become empty until next INVOKE.",
             "",
