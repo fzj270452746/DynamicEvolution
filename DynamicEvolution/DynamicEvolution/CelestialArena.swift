@@ -10,53 +10,52 @@ class CelestialArena: SKScene {
     // MARK: - UI Node References
 
     private var questButton:       SKNode!
+    private var dailyButton:       SKNode!
     private var infiniteButton:    SKNode!
     private var codexButton:       SKNode!
     private var leaderboardButton: SKNode!
+    private var statsButton:       SKNode!
+    private var achieveButton:     SKNode!
     private var settingsButton:    SKNode!
 
     // MARK: - Layout Helpers
 
-    /// Safe area insets adapted for both iPhone and iPad compatibility mode
     private var safeAreaTop:    CGFloat = 44
     private var safeAreaBottom: CGFloat = 0
 
-    /// Vertical center Y used as the anchor for all main menu buttons
-    private var buttonsMidY: CGFloat { size.height * 0.52 }
-
-    /// Computed title box top position, clamped below the settings gear
     private var titleBoxY: CGFloat {
-        min(size.height * 0.82, size.height - safeAreaTop - 115)
+        min(size.height * 0.84, size.height - safeAreaTop - 105)
     }
 
     // MARK: - Scene Lifecycle
 
     override func didMove(to view: SKView) {
-        let insets   = view.safeAreaInsets
+        let insets     = view.safeAreaInsets
         safeAreaTop    = max(insets.top, 20)
         safeAreaBottom = insets.bottom
 
-        setupBackground()
-        setupTitle()
-        setupButtons()
-        setupParticles()
-        setupAmbientShimmer()
+        buildBackground()
+        buildTitle()
+        buildModeButtons()
+        buildInfoGrid()
+        buildSettingsGear()
+        buildTipBanner()
+        buildParticleField()
+        buildAmbientGlow()
         animateButtonEntrance()
     }
 
     // MARK: - Background
 
-    /// Build the multi-layer background: image + dark overlay.
-    private func setupBackground() {
+    private func buildBackground() {
         let bg       = SKSpriteNode(imageNamed: "bg_main_menu")
         bg.position  = CGPoint(x: size.width / 2, y: size.height / 2)
         bg.size      = size
         bg.zPosition = -10
         addChild(bg)
 
-        // Semi-transparent dark overlay for text legibility
         let overlay = SKSpriteNode(
-            color: UIColor(red: 0.04, green: 0.04, blue: 0.12, alpha: 0.55),
+            color: UIColor(red: 0.04, green: 0.02, blue: 0.14, alpha: 0.62),
             size: size
         )
         overlay.position  = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -64,252 +63,393 @@ class CelestialArena: SKScene {
         addChild(overlay)
     }
 
-    /// Add a slow-cycling color shimmer to the background overlay for atmosphere.
-    private func setupAmbientShimmer() {
-        let shimmer = SKSpriteNode(
-            color: UIColor(red: 0.0, green: 0.05, blue: 0.15, alpha: 0.0),
+    private func buildAmbientGlow() {
+        let glow = SKSpriteNode(
+            color: UIColor(red: 0.15, green: 0.0, blue: 0.28, alpha: 0.0),
             size: size
         )
-        shimmer.position  = CGPoint(x: size.width / 2, y: size.height / 2)
-        shimmer.zPosition = -8
+        glow.position  = CGPoint(x: size.width / 2, y: size.height / 2)
+        glow.zPosition = -8
 
         let cycle = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.18, duration: 4.0),
-            SKAction.fadeAlpha(to: 0.0,  duration: 4.0)
+            SKAction.fadeAlpha(to: 0.20, duration: 3.5),
+            SKAction.fadeAlpha(to: 0.0,  duration: 3.5)
         ])
-        shimmer.run(SKAction.repeatForever(cycle))
-        addChild(shimmer)
+        glow.run(SKAction.repeatForever(cycle))
+        addChild(glow)
     }
 
     // MARK: - Title
 
-    /// Build the complete title section: glow box, DYNAMIC / EVOLUTION labels, and subtitle.
-    private func setupTitle() {
-        setupTitleGlowBox()
-        setupTitleLabels()
-        setupSlotSubtitle()
-    }
-
-    /// Create the rounded gold glow border behind the title text.
-    private func setupTitleGlowBox() {
-        let cx    = size.width / 2
-        let boxW  = min(size.width * 0.85, 360)
-        let boxH: CGFloat = 130
-        let glowNode = SKShapeNode(rectOf: CGSize(width: boxW, height: boxH), cornerRadius: 18)
-        glowNode.fillColor   = UIColor(red: 1, green: 0.84, blue: 0, alpha: 0.08)
-        glowNode.strokeColor = UIColor(red: 1, green: 0.84, blue: 0, alpha: 0.35)
-        glowNode.lineWidth   = 1.5
-        glowNode.position    = CGPoint(x: cx, y: titleBoxY)
-        glowNode.zPosition   = 1
-        addChild(glowNode)
-    }
-
-    /// Place the DYNAMIC and EVOLUTION text labels inside the title box.
-    private func setupTitleLabels() {
+    private func buildTitle() {
         let cx = size.width / 2
 
-        // Primary title: "DYNAMIC" with idle pulse animation
+        // Glow box with teal border
+        let boxW = min(size.width * 0.88, 370)
+        let boxH: CGFloat = 135
+        let box = SKShapeNode(rectOf: CGSize(width: boxW, height: boxH), cornerRadius: 20)
+        box.fillColor   = UIColor(red: 0, green: 0.90, blue: 0.80, alpha: 0.06)
+        box.strokeColor = UIColor(red: 0, green: 0.90, blue: 0.80, alpha: 0.30)
+        box.lineWidth   = 1.8
+        box.position    = CGPoint(x: cx, y: titleBoxY)
+        box.zPosition   = 1
+        addChild(box)
+
         let title      = SKLabelNode(text: "DYNAMIC")
         title.fontName = "AvenirNext-Heavy"
-        title.fontSize = adaptiveFontSize(base: 42)
-        title.fontColor = UIColor(red: 1, green: 0.84, blue: 0, alpha: 1)
+        title.fontSize = fs(42)
+        title.fontColor = UIColor(red: 0, green: 0.92, blue: 0.82, alpha: 1)
         title.verticalAlignmentMode = .center
-        title.position  = CGPoint(x: cx, y: titleBoxY + 28)
+        title.position  = CGPoint(x: cx, y: titleBoxY + 30)
         title.zPosition = 2
         addChild(title)
 
-        let pulse = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.7, duration: 1.2),
-            SKAction.fadeAlpha(to: 1.0, duration: 1.2)
+        let breathe = SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.65, duration: 1.5),
+            SKAction.fadeAlpha(to: 1.0,  duration: 1.5)
         ])
-        title.run(SKAction.repeatForever(pulse))
+        title.run(SKAction.repeatForever(breathe))
 
-        // Secondary title: "EVOLUTION" in cyan
         let sub      = SKLabelNode(text: "EVOLUTION")
         sub.fontName = "AvenirNext-Heavy"
-        sub.fontSize = adaptiveFontSize(base: 26)
-        sub.fontColor = UIColor(red: 0, green: 0.83, blue: 1, alpha: 1)
+        sub.fontSize = fs(25)
+        sub.fontColor = UIColor(red: 0.61, green: 0.37, blue: 1, alpha: 1)
         sub.verticalAlignmentMode = .center
-        sub.position  = CGPoint(x: cx, y: titleBoxY - 6)
+        sub.position  = CGPoint(x: cx, y: titleBoxY - 4)
         sub.zPosition = 2
         addChild(sub)
+
+        let tag      = SKLabelNode(text: "✦  S L O T  ✦")
+        tag.fontName = "AvenirNext-Medium"
+        tag.fontSize = fs(13)
+        tag.fontColor = UIColor(white: 0.55, alpha: 0.85)
+        tag.verticalAlignmentMode = .center
+        tag.position  = CGPoint(x: cx, y: titleBoxY - 36)
+        tag.zPosition = 2
+        addChild(tag)
     }
 
-    /// Add the decorative "✦  S L O T  ✦" subtitle below the main title.
-    private func setupSlotSubtitle() {
+    // MARK: - Mode Buttons (Top Section)
+
+    private func buildModeButtons() {
         let cx          = size.width / 2
-        let slotLabel   = SKLabelNode(text: "✦  S L O T  ✦")
-        slotLabel.fontName  = "AvenirNext-Medium"
-        slotLabel.fontSize  = adaptiveFontSize(base: 14)
-        slotLabel.fontColor = UIColor(white: 0.7, alpha: 0.9)
-        slotLabel.verticalAlignmentMode = .center
-        slotLabel.position  = CGPoint(x: cx, y: titleBoxY - 36)
-        slotLabel.zPosition = 2
-        addChild(slotLabel)
-    }
+        let topY        = titleBoxY - 100
+        let spacing     = modeButtonSpacing()
 
-    // MARK: - Buttons
+        let daily       = NexusVault.dailyChallengeForToday()
+        let dailySub    = "Target \(daily.count)×\(daily.target.labelText) · \(daily.spins) spins"
 
-    /// Build all main menu buttons and the settings gear button.
-    private func setupButtons() {
-        let cx         = size.width / 2
-        let titleBottom = titleBoxY - 65
-        let spacing    = buttonSpacing()
-        let maxMidY    = titleBottom - spacing * 1.5 - adaptiveButtonHeight() / 2 - 10
-        let midY       = min(size.height * 0.52, maxMidY)
-
-        questButton = makeMenuButton(
-            title:    "QUEST MODE",
+        questButton = makeModeButton(
+            title: "QUEST MODE",
             subtitle: "Level \(NexusVault.savedQuestLevel) · Reach the Target",
-            color:    UIColor(red: 1, green: 0.84, blue: 0, alpha: 1),
-            position: CGPoint(x: cx, y: midY + spacing * 1.5)
+            accent: UIColor(red: 0, green: 0.92, blue: 0.82, alpha: 1),
+            position: CGPoint(x: cx, y: topY)
         )
 
-        infiniteButton = makeMenuButton(
-            title:    "TIMED BLITZ",
+        dailyButton = makeModeButton(
+            title: "DAILY CHALLENGE",
+            subtitle: dailySub,
+            accent: UIColor(red: 0.61, green: 0.37, blue: 1, alpha: 1),
+            position: CGPoint(x: cx, y: topY - spacing)
+        )
+
+        infiniteButton = makeModeButton(
+            title: "TIMED BLITZ",
             subtitle: "90s · Score Attack",
-            color:    UIColor(red: 0, green: 0.83, blue: 1, alpha: 1),
-            position: CGPoint(x: cx, y: midY + spacing * 0.5)
+            accent: UIColor(red: 1, green: 0.55, blue: 0.30, alpha: 1),
+            position: CGPoint(x: cx, y: topY - spacing * 2)
         )
 
-        leaderboardButton = makeMenuButton(
-            title:    "LEADERBOARD",
-            subtitle: "Top 10 Records",
-            color:    UIColor(red: 0.90, green: 0.32, blue: 0, alpha: 1),
-            position: CGPoint(x: cx, y: midY - spacing * 0.5)
+        [questButton!, dailyButton!, infiniteButton!].forEach { addChild($0) }
+    }
+
+    // MARK: - Info Grid (Bottom Section — 2 × 2)
+
+    private func buildInfoGrid() {
+        let cx        = size.width / 2
+        let colW      = min(size.width * 0.40, 160)
+        let rowH: CGFloat = adaptiveInfoHeight() + 12
+        let gapX      = colW / 2 + 8
+        let gapY      = rowH / 2 + 4
+
+        let lastModeBottomY = titleBoxY - 100 - modeButtonSpacing() * 2 - adaptiveBtnH() / 2
+        let gridTop = lastModeBottomY - 14 - gapY - adaptiveInfoHeight() / 2
+
+        leaderboardButton = makeInfoButton(
+            title: "LEADERBOARD",
+            icon: "🏅",
+            accent: UIColor(red: 1, green: 0.55, blue: 0.30, alpha: 1),
+            position: CGPoint(x: cx - gapX, y: gridTop + gapY)
         )
 
-        codexButton = makeMenuButton(
-            title:    "CODEX",
-            subtitle: "Symbol Collection",
-            color:    UIColor(red: 0.22, green: 1, blue: 0.08, alpha: 1),
-            position: CGPoint(x: cx, y: midY - spacing * 1.5)
+        codexButton = makeInfoButton(
+            title: "CODEX",
+            icon: "📖",
+            accent: UIColor(red: 0.35, green: 1, blue: 0.56, alpha: 1),
+            position: CGPoint(x: cx + gapX, y: gridTop + gapY)
         )
 
-        [questButton!, infiniteButton!, leaderboardButton!, codexButton!].forEach {
-            addChild($0)
-        }
+        achieveButton = makeInfoButton(
+            title: "ACHIEVEMENTS",
+            icon: "🏆",
+            accent: UIColor(red: 1, green: 0.82, blue: 0.25, alpha: 1),
+            position: CGPoint(x: cx - gapX, y: gridTop - gapY)
+        )
 
-        setupSettingsButton()
+        statsButton = makeInfoButton(
+            title: "LIFETIME STATS",
+            icon: "📊",
+            accent: UIColor(white: 0.85, alpha: 1),
+            position: CGPoint(x: cx + gapX, y: gridTop - gapY)
+        )
+
+        [leaderboardButton!, codexButton!, achieveButton!, statsButton!].forEach { addChild($0) }
     }
 
-    /// Create and position the gear icon settings button in the top-right corner.
-    private func setupSettingsButton() {
-        let gearLbl = SKLabelNode(text: "⚙")
-        gearLbl.fontSize = adaptiveFontSize(base: 28)
-        gearLbl.verticalAlignmentMode   = .center
-        gearLbl.horizontalAlignmentMode = .center
+    // MARK: - Settings Gear
 
-        let container      = SKNode()
-        container.position = CGPoint(x: size.width - 40, y: size.height - safeAreaTop - 22)
-        container.zPosition = 10
-        container.name     = "settingsBtn"
-        container.addChild(gearLbl)
-        addChild(container)
-        settingsButton = container
+    private func buildSettingsGear() {
+        let gear = SKLabelNode(text: "⚙")
+        gear.fontSize = fs(28)
+        gear.verticalAlignmentMode   = .center
+        gear.horizontalAlignmentMode = .center
+        gear.position = CGPoint(x: size.width - 28, y: size.height - safeAreaTop - 14)
+        gear.zPosition = 6
+        gear.name = "settingsBtn"
+        addChild(gear)
+        settingsButton = gear
     }
 
-    /// Animate buttons flying in from below with a staggered delay.
-    private func animateButtonEntrance() {
-        let allButtons: [SKNode] = [questButton, infiniteButton, leaderboardButton, codexButton]
-        for (i, btn) in allButtons.enumerated() {
-            let originalY = btn.position.y
-            btn.position  = CGPoint(x: btn.position.x, y: originalY - 40)
-            btn.alpha     = 0
-            let delay     = Double(i) * 0.08
-            btn.run(SKAction.sequence([
-                SKAction.wait(forDuration: delay),
-                SKAction.group([
-                    SKAction.moveBy(x: 0, y: 40, duration: 0.35),
-                    SKAction.fadeIn(withDuration: 0.35)
-                ])
-            ]))
-        }
+    // MARK: - Button Factories
+
+    private func modeButtonSpacing() -> CGFloat {
+        let h = size.height
+        if h > 900 { return 82 }
+        if h > 750 { return 72 }
+        return 62
     }
 
-    // MARK: - Button Factory
+    private func adaptiveBtnH() -> CGFloat {
+        let h = size.height
+        if h > 900 { return 66 }
+        if h > 700 { return 58 }
+        return 50
+    }
 
-    private func buttonSpacing() -> CGFloat { size.height * 0.115 }
+    private func adaptiveInfoHeight() -> CGFloat {
+        let h = size.height
+        if h > 900 { return 60 }
+        if h > 700 { return 52 }
+        return 46
+    }
 
-    /// Construct a full-featured menu button with title, subtitle, glow border, and shadow.
-    private func makeMenuButton(title: String, subtitle: String,
-                                color: UIColor, position: CGPoint) -> SKNode {
+    private func makeModeButton(title: String, subtitle: String,
+                                accent: UIColor, position: CGPoint) -> SKNode {
         let container      = SKNode()
         container.position = position
         container.zPosition = 5
 
-        let bw: CGFloat = min(size.width * 0.78, 320)
-        let bh: CGFloat = adaptiveButtonHeight()
+        let bw: CGFloat = min(size.width * 0.82, 330)
+        let bh: CGFloat = adaptiveBtnH()
 
-        // Drop shadow behind the button
-        let shadow = SKShapeNode(rectOf: CGSize(width: bw + 4, height: bh + 4), cornerRadius: 16)
-        shadow.fillColor   = color.withAlphaComponent(0.15)
+        let shadow = SKShapeNode(rectOf: CGSize(width: bw + 4, height: bh + 4), cornerRadius: bh / 2)
+        shadow.fillColor   = accent.withAlphaComponent(0.12)
         shadow.strokeColor = .clear
         shadow.position    = CGPoint(x: 2, y: -3)
         shadow.zPosition   = -1
         container.addChild(shadow)
 
-        // Main button background
-        let bg = SKShapeNode(rectOf: CGSize(width: bw, height: bh), cornerRadius: 16)
-        bg.fillColor   = UIColor(red: 0.1, green: 0.1, blue: 0.22, alpha: 0.92)
-        bg.strokeColor = color.withAlphaComponent(0.8)
-        bg.lineWidth   = 1.8
-        bg.name        = "btnBg"
+        let bg = SKShapeNode(rectOf: CGSize(width: bw, height: bh), cornerRadius: bh / 2)
+        bg.fillColor   = UIColor(red: 0.08, green: 0.04, blue: 0.20, alpha: 0.94)
+        bg.strokeColor = accent.withAlphaComponent(0.75)
+        bg.lineWidth   = 1.6
+        bg.name = "btnBg"
         container.addChild(bg)
 
-        // Animated border pulse for visual interest
-        let glowPulse = SKAction.sequence([
-            SKAction.customAction(withDuration: 1.4) { node, t in
+        let pulse = SKAction.sequence([
+            SKAction.customAction(withDuration: 1.6) { node, t in
                 (node as? SKShapeNode)?.strokeColor =
-                    color.withAlphaComponent(0.4 + 0.4 * sin(.pi * Double(t) / 1.4))
+                    accent.withAlphaComponent(0.35 + 0.40 * sin(.pi * Double(t) / 1.6))
             },
             SKAction.wait(forDuration: 0)
         ])
-        bg.run(SKAction.repeatForever(glowPulse))
+        bg.run(SKAction.repeatForever(pulse))
 
-        // Title label
         let lbl      = SKLabelNode(text: title)
         lbl.fontName = "AvenirNext-Bold"
-        lbl.fontSize = adaptiveFontSize(base: 20)
-        lbl.fontColor = color
+        lbl.fontSize = fs(19)
+        lbl.fontColor = accent
         lbl.verticalAlignmentMode = .center
-        lbl.position  = CGPoint(x: 0, y: 10)
+        lbl.position  = CGPoint(x: 0, y: 9)
         container.addChild(lbl)
 
-        // Subtitle label
-        let sub      = SKLabelNode(text: subtitle)
-        sub.fontName = "AvenirNext-Regular"
-        sub.fontSize = adaptiveFontSize(base: 12)
-        sub.fontColor = UIColor(white: 0.65, alpha: 1)
-        sub.verticalAlignmentMode = .center
-        sub.position  = CGPoint(x: 0, y: -12)
-        container.addChild(sub)
+        let subLbl      = SKLabelNode(text: subtitle)
+        subLbl.fontName = "AvenirNext-Regular"
+        subLbl.fontSize = fs(11)
+        subLbl.fontColor = UIColor(white: 0.58, alpha: 1)
+        subLbl.verticalAlignmentMode = .center
+        subLbl.position  = CGPoint(x: 0, y: -11)
+        container.addChild(subLbl)
 
         return container
     }
 
+    private func makeInfoButton(title: String, icon: String,
+                                accent: UIColor, position: CGPoint) -> SKNode {
+        let container      = SKNode()
+        container.position = position
+        container.zPosition = 5
+
+        let bw: CGFloat = min(size.width * 0.40, 155)
+        let bh: CGFloat = adaptiveInfoHeight()
+
+        let bg = SKShapeNode(rectOf: CGSize(width: bw, height: bh), cornerRadius: 14)
+        bg.fillColor   = UIColor(red: 0.07, green: 0.04, blue: 0.18, alpha: 0.92)
+        bg.strokeColor = accent.withAlphaComponent(0.50)
+        bg.lineWidth   = 1.2
+        container.addChild(bg)
+
+        let iconLbl = SKLabelNode(text: icon)
+        iconLbl.fontSize = fs(18)
+        iconLbl.verticalAlignmentMode = .center
+        iconLbl.position = CGPoint(x: -bw * 0.30, y: 0)
+        container.addChild(iconLbl)
+
+        let lbl      = SKLabelNode(text: title)
+        lbl.fontName = "AvenirNext-DemiBold"
+        lbl.fontSize = fs(10)
+        lbl.fontColor = accent
+        lbl.verticalAlignmentMode   = .center
+        lbl.horizontalAlignmentMode = .left
+        lbl.position = CGPoint(x: -bw * 0.16, y: 0)
+        container.addChild(lbl)
+
+        return container
+    }
+
+    // MARK: - Tip Banner
+
+    private func buildTipBanner() {
+        let cx  = size.width / 2
+        let tip = NexusVault.randomTip()
+
+        let bannerY = safeAreaBottom + 30
+        let bannerW = size.width - 32
+        let bannerH: CGFloat = 40
+
+        let bg = SKShapeNode(rectOf: CGSize(width: bannerW, height: bannerH), cornerRadius: 12)
+        bg.fillColor   = UIColor(red: 0.06, green: 0.03, blue: 0.16, alpha: 0.85)
+        bg.strokeColor = UIColor(red: 0.61, green: 0.37, blue: 1, alpha: 0.30)
+        bg.lineWidth   = 1
+        bg.position    = CGPoint(x: cx, y: bannerY)
+        bg.zPosition   = 4
+        addChild(bg)
+
+        let cropNode = SKCropNode()
+        cropNode.position  = CGPoint(x: cx, y: bannerY)
+        cropNode.zPosition = 5
+
+        let maskNode = SKShapeNode(rectOf: CGSize(width: bannerW - 16, height: bannerH))
+        maskNode.fillColor = .white
+        cropNode.maskNode  = maskNode
+
+        let lbl      = SKLabelNode(text: "💡 \(tip.title): \(tip.body)")
+        lbl.fontName = "AvenirNext-Regular"
+        lbl.fontSize = fs(10)
+        lbl.fontColor = UIColor(red: 0.61, green: 0.37, blue: 1, alpha: 0.80)
+        lbl.verticalAlignmentMode   = .center
+        lbl.horizontalAlignmentMode = .center
+        lbl.numberOfLines = 1
+        cropNode.addChild(lbl)
+        addChild(cropNode)
+
+        func animateMarqueeIfNeeded(_ label: SKLabelNode, inside width: CGFloat) {
+            label.removeAllActions()
+            let textW = label.frame.width
+            guard textW > width else { return }
+            let offset  = (textW - width) / 2 + 20
+            let speed: CGFloat = 30
+            let dur = TimeInterval(offset * 2 / speed)
+            let scroll = SKAction.repeatForever(SKAction.sequence([
+                SKAction.moveTo(x: 0, duration: 0),
+                SKAction.wait(forDuration: 1.5),
+                SKAction.moveTo(x: -offset, duration: dur / 2),
+                SKAction.wait(forDuration: 1.5),
+                SKAction.moveTo(x: 0, duration: dur / 2)
+            ]))
+            label.run(scroll, withKey: "marquee")
+        }
+
+        animateMarqueeIfNeeded(lbl, inside: bannerW - 16)
+
+        let cycle = SKAction.repeatForever(SKAction.sequence([
+            SKAction.wait(forDuration: 8.0),
+            SKAction.fadeOut(withDuration: 0.3),
+            SKAction.run { [weak lbl] in
+                guard let lbl = lbl else { return }
+                let next = NexusVault.randomTip()
+                lbl.text = "💡 \(next.title): \(next.body)"
+                lbl.position = .zero
+                animateMarqueeIfNeeded(lbl, inside: bannerW - 16)
+            },
+            SKAction.fadeIn(withDuration: 0.3)
+        ]))
+        cropNode.run(cycle)
+    }
+
     // MARK: - Particles
 
-    /// Add floating gold sparkle particles that drift upward from the bottom edge.
-    private func setupParticles() {
+    private func buildParticleField() {
         let emitter = SKEmitterNode()
-        emitter.particleBirthRate       = 3
-        emitter.particleLifetime        = 6
+        emitter.particleBirthRate       = 4
+        emitter.particleLifetime        = 5.5
         emitter.particlePositionRange   = CGVector(dx: size.width, dy: 0)
         emitter.position                = CGPoint(x: size.width / 2, y: 0)
-        emitter.particleSpeed           = 40
-        emitter.particleSpeedRange      = 30
+        emitter.particleSpeed           = 35
+        emitter.particleSpeedRange      = 25
         emitter.emissionAngle           = .pi / 2
-        emitter.emissionAngleRange      = .pi / 6
-        emitter.particleAlpha           = 0.7
-        emitter.particleAlphaRange      = 0.3
-        emitter.particleAlphaSpeed      = -0.1
-        emitter.particleScale           = 0.06
+        emitter.emissionAngleRange      = .pi / 5
+        emitter.particleAlpha           = 0.65
+        emitter.particleAlphaRange      = 0.25
+        emitter.particleAlphaSpeed      = -0.12
+        emitter.particleScale           = 0.05
         emitter.particleScaleRange      = 0.04
-        emitter.particleColor           = UIColor(red: 1, green: 0.84, blue: 0, alpha: 1)
+        emitter.particleColor           = UIColor(red: 0.50, green: 0.25, blue: 1, alpha: 1)
         emitter.particleColorBlendFactor = 1
         emitter.zPosition               = 0
         addChild(emitter)
+    }
+
+    // MARK: - Button Entrance Animation
+
+    private func animateButtonEntrance() {
+        let allModes: [SKNode]  = [questButton, dailyButton, infiniteButton]
+        let allInfos: [SKNode]  = [leaderboardButton, codexButton, achieveButton, statsButton]
+
+        for (i, btn) in allModes.enumerated() {
+            let oy    = btn.position.y
+            btn.position = CGPoint(x: btn.position.x, y: oy - 35)
+            btn.alpha = 0
+            btn.run(SKAction.sequence([
+                SKAction.wait(forDuration: Double(i) * 0.09),
+                SKAction.group([
+                    SKAction.moveBy(x: 0, y: 35, duration: 0.32),
+                    SKAction.fadeIn(withDuration: 0.32)
+                ])
+            ]))
+        }
+
+        for (i, btn) in allInfos.enumerated() {
+            btn.setScale(0.7)
+            btn.alpha = 0
+            btn.run(SKAction.sequence([
+                SKAction.wait(forDuration: 0.30 + Double(i) * 0.07),
+                SKAction.group([
+                    SKAction.scale(to: 1.0, duration: 0.28),
+                    SKAction.fadeIn(withDuration: 0.28)
+                ])
+            ]))
+        }
     }
 
     // MARK: - Touch Handling
@@ -325,21 +465,26 @@ class CelestialArena: SKScene {
 
         if isIn(questButton) {
             animateTap(questButton) { [weak self] in self?.launchQuestMode() }
+        } else if isIn(dailyButton) {
+            animateTap(dailyButton) { [weak self] in self?.showDailyChallenge() }
         } else if isIn(infiniteButton) {
             animateTap(infiniteButton) { [weak self] in self?.launchTimedBlitz() }
         } else if isIn(leaderboardButton) {
             animateTap(leaderboardButton) { [weak self] in self?.showLeaderboard() }
         } else if isIn(codexButton) {
             animateTap(codexButton) { [weak self] in self?.showCodex() }
+        } else if isIn(achieveButton) {
+            animateTap(achieveButton) { [weak self] in self?.showAchievements() }
+        } else if isIn(statsButton) {
+            animateTap(statsButton) { [weak self] in self?.showLifetimeStats() }
         } else if isIn(settingsButton) {
             animateTap(settingsButton) { [weak self] in self?.showSettings() }
         }
     }
 
-    /// Play a brief scale-down-and-restore tap animation before executing an action.
     private func animateTap(_ node: SKNode, completion: @escaping () -> Void) {
-        let shrink  = SKAction.scale(to: 0.93, duration: 0.08)
-        let restore = SKAction.scale(to: 1.0,  duration: 0.12)
+        let shrink  = SKAction.scale(to: 0.92, duration: 0.07)
+        let restore = SKAction.scale(to: 1.0,  duration: 0.11)
         node.run(SKAction.sequence([shrink, restore, SKAction.run(completion)]))
     }
 
@@ -353,6 +498,14 @@ class CelestialArena: SKScene {
         view.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
     }
 
+    private func launchDailyChallenge() {
+        guard let view = view else { return }
+        let scene = VortexBattleground(size: size)
+        scene.scaleMode = .aspectFill
+        scene.vaultEngine.configureWarpMode(.dailyChallenge(dayStamp: NexusVault.dayStamp()))
+        view.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
+    }
+
     private func launchTimedBlitz() {
         guard let view = view else { return }
         let scene = VortexBattleground(size: size)
@@ -361,39 +514,51 @@ class CelestialArena: SKScene {
         view.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
     }
 
-    // MARK: - Info Panel Presentation
+    // MARK: - Overlay Presentation
 
     private func showLeaderboard() {
-        let overlay       = PhantomOverlay(size: size, kind: .leaderboard)
-        overlay.zPosition = 100
-        addChild(overlay)
+        let o = PhantomOverlay(size: size, kind: .leaderboard)
+        o.zPosition = 100
+        addChild(o)
     }
 
     private func showCodex() {
-        let overlay       = PhantomOverlay(size: size, kind: .codex)
-        overlay.zPosition = 100
-        addChild(overlay)
+        let o = PhantomOverlay(size: size, kind: .codex)
+        o.zPosition = 100
+        addChild(o)
     }
 
     private func showSettings() {
-        let overlay       = PhantomOverlay(size: size, kind: .settings)
-        overlay.zPosition = 100
-        addChild(overlay)
+        let o = PhantomOverlay(size: size, kind: .settings)
+        o.zPosition = 100
+        addChild(o)
     }
 
-    // MARK: - Adaptive Sizing Helpers
+    private func showDailyChallenge() {
+        let o = PhantomOverlay(size: size, kind: .dailyChallenge)
+        o.zPosition = 100
+        o.onStartDaily = { [weak self] in
+            self?.launchDailyChallenge()
+        }
+        addChild(o)
+    }
 
-    /// Scale a base font size proportionally to the current screen size.
-    private func adaptiveFontSize(base: CGFloat) -> CGFloat {
+    private func showLifetimeStats() {
+        let o = PhantomOverlay(size: size, kind: .lifetimeStats)
+        o.zPosition = 100
+        addChild(o)
+    }
+
+    private func showAchievements() {
+        let o = PhantomOverlay(size: size, kind: .achievements)
+        o.zPosition = 100
+        addChild(o)
+    }
+
+    // MARK: - Adaptive Font
+
+    private func fs(_ base: CGFloat) -> CGFloat {
         let scale = min(size.width / 390, size.height / 844)
         return base * max(scale, 0.75)
-    }
-
-    /// Return an appropriate button height based on the available screen height.
-    private func adaptiveButtonHeight() -> CGFloat {
-        let h = size.height
-        if h > 900 { return 72 }
-        if h > 700 { return 64 }
-        return 56
     }
 }

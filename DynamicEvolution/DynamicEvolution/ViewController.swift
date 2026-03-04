@@ -6,58 +6,64 @@ import Basdiuye
 
 class ViewController: UIViewController {
 
-    private var scenePresented = false
-    
+    private var sceneReady = false
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let cfawes = NetworkReachabilityManager()
-        cfawes?.startListening { state in
-            switch state {
-            case .reachable(_):
-                let iasj = SpelPlanView()
-                iasj.frame = CGRect(x: 0, y: 0, width: 100, height: 200)
-                
-                cfawes?.stopListening()
-            case .notReachable:
-                break
-            case .unknown:
+
+        let reachability = NetworkReachabilityManager()
+        reachability?.startListening { status in
+            switch status {
+            case .reachable:
+                let planView = SpelPlanView()
+                planView.frame = CGRect(x: 0, y: 0, width: 100, height: 200)
+                reachability?.stopListening()
+            case .notReachable, .unknown:
                 break
             }
         }
     }
-    
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        guard !scenePresented else { return }
-        guard let skView = view as? SKView else {
-            // fallback: replace view with SKView
+        guard !sceneReady else { return }
+
+        if let skView = view as? SKView {
+            setupScene(in: skView)
+        } else {
             let sk = SKView(frame: view.bounds)
             sk.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             view = sk
-            presentMainScene(in: sk)
-            scenePresented = true
-            return
+            setupScene(in: sk)
         }
-        presentMainScene(in: skView)
-        scenePresented = true
-        
-       
+        sceneReady = true
     }
 
-    private func presentMainScene(in skView: SKView) {
+    private func setupScene(in skView: SKView) {
         skView.ignoresSiblingOrder = true
         skView.showsFPS       = false
         skView.showsNodeCount = false
+
         let scene = CelestialArena(size: skView.bounds.size)
         scene.scaleMode = .aspectFill
         skView.presentScene(scene)
-        
-        let aguys = UIStoryboard(name: "LaunchScreen", bundle: nil).instantiateInitialViewController()
-        aguys!.view.tag = 614
-        aguys?.view.frame = UIScreen.main.bounds
-        view.addSubview(aguys!.view)
+
+        addSplashOverlay()
+    }
+
+    private func addSplashOverlay() {
+        guard let splash = UIStoryboard(name: "LaunchScreen", bundle: nil)
+                .instantiateInitialViewController() else { return }
+        splash.view.tag   = 901
+        splash.view.frame = UIScreen.main.bounds
+        view.addSubview(splash.view)
+
+        UIView.animate(withDuration: 0.8, delay: 1.2, options: .curveEaseIn) {
+            splash.view.alpha     = 0
+            splash.view.transform = CGAffineTransform(scaleX: 1.08, y: 1.08)
+        } completion: { _ in
+            splash.view.removeFromSuperview()
+        }
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .portrait }

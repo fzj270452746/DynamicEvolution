@@ -66,14 +66,14 @@ enum GlyphTier: Int, CaseIterable, Comparable {
     /// Used in tile borders, HUD labels, and particle effects.
     var themeColor: UIColor {
         switch self {
-        case .seedling:  return UIColor(red: 0.55, green: 0.41, blue: 0.08, alpha: 1)
-        case .verdant:   return UIColor(red: 0.30, green: 0.69, blue: 0.31, alpha: 1)
-        case .sapling:   return UIColor(red: 0.18, green: 0.49, blue: 0.20, alpha: 1)
-        case .arbor:     return UIColor(red: 0.11, green: 0.37, blue: 0.13, alpha: 1)
-        case .ancient:   return UIColor(red: 1.00, green: 0.76, blue: 0.03, alpha: 1)
-        case .mystic:    return UIColor(red: 0.42, green: 0.11, blue: 0.60, alpha: 1)
-        case .legendary: return UIColor(red: 0.90, green: 0.32, blue: 0.00, alpha: 1)
-        case .divine:    return UIColor(red: 1.00, green: 0.90, blue: 0.50, alpha: 1)
+        case .seedling:  return UIColor(red: 0.60, green: 0.45, blue: 0.20, alpha: 1)
+        case .verdant:   return UIColor(red: 0.25, green: 0.75, blue: 0.50, alpha: 1)
+        case .sapling:   return UIColor(red: 0.15, green: 0.55, blue: 0.35, alpha: 1)
+        case .arbor:     return UIColor(red: 0.10, green: 0.42, blue: 0.25, alpha: 1)
+        case .ancient:   return UIColor(red: 0.95, green: 0.72, blue: 0.10, alpha: 1)
+        case .mystic:    return UIColor(red: 0.55, green: 0.20, blue: 0.80, alpha: 1)
+        case .legendary: return UIColor(red: 1.00, green: 0.40, blue: 0.15, alpha: 1)
+        case .divine:    return UIColor(red: 0.95, green: 0.85, blue: 0.45, alpha: 1)
         }
     }
 
@@ -96,6 +96,9 @@ enum WarpMode {
     /// Score attack: accumulate as many points as possible in 90 seconds.
     case timedBlitz
 
+    /// Daily challenge: fixed seed, limited spins, and a daily target.
+    case dailyChallenge(dayStamp: Int)
+
     // MARK: Mode Metadata
 
     /// Human-readable mode name for UI display
@@ -103,18 +106,27 @@ enum WarpMode {
         switch self {
         case .questRun(let lvl): return "Quest Lv.\(lvl)"
         case .timedBlitz:        return "Timed Blitz"
+        case .dailyChallenge:    return "Daily Challenge"
         }
     }
 
     /// Whether this mode imposes a finite spin budget on the player
     var hasLimitedSpins: Bool {
-        if case .questRun = self { return true }
-        return false
+        switch self {
+        case .questRun, .dailyChallenge: return true
+        case .timedBlitz:                return false
+        }
     }
 
-    /// Quest level number, or nil when in timed blitz mode
+    /// Quest level number, or nil when not in quest mode
     var questLevel: Int? {
         if case .questRun(let lvl) = self { return lvl }
+        return nil
+    }
+
+    /// Daily challenge day stamp (YYYYMMDD), or nil in other modes
+    var dayStamp: Int? {
+        if case .dailyChallenge(let stamp) = self { return stamp }
         return nil
     }
 }

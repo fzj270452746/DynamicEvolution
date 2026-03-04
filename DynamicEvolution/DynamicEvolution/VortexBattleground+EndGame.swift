@@ -7,7 +7,6 @@ extension VortexBattleground {
 
     // MARK: - Per-Frame Update (Timed Blitz)
 
-    /// Called each frame by SpriteKit. Handles the timed blitz countdown clock.
     override func update(_ currentTime: TimeInterval) {
         guard case .timedBlitz = vaultEngine.warpMode else { return }
         guard !timedGameOver else { return }
@@ -18,7 +17,6 @@ extension VortexBattleground {
 
         timeRemaining -= dt
 
-        // Flash the timer label when entering the 10-second danger zone
         let secsNow  = Int(ceil(timeRemaining))
         let secsPrev = Int(ceil(timeRemaining + dt))
         if secsNow == 10 && secsPrev > 10 {
@@ -31,23 +29,19 @@ extension VortexBattleground {
             endTimedBlitz()
         }
 
-        // Live timer display update
         let secs = Int(ceil(timeRemaining))
         timerLbl.text      = "⏱ \(secs)s"
         timerLbl.fontColor = secs <= 10
-            ? UIColor(red: 1, green: 0.19, blue: 0.19, alpha: 1)
-            : UIColor(red: 1, green: 0.84, blue: 0, alpha: 1)
+            ? UIColor(red: 1, green: 0.37, blue: 0.42, alpha: 1)
+            : UIColor(red: 0, green: 0.92, blue: 0.82, alpha: 1)
     }
 
     // MARK: - Timed Blitz End
 
-    /// Handle the end of a timed blitz session: lock the board,
-    /// save the result to the leaderboard, then show the result overlay.
     func endTimedBlitz() {
         isAnimating = true
         setSpinButtonEnabled(false)
 
-        // Persist result before presenting overlay
         let stats = vaultEngine.apexTierStats()
         NexusVault.saveToLeaderboard(
             score:     vaultEngine.totalLuminance,
@@ -55,12 +49,13 @@ extension VortexBattleground {
             apexCount: stats?.count ?? 0
         )
 
+        recordSessionIfNeeded(won: false)
+
         run(SKAction.wait(forDuration: 0.5)) { [weak self] in
             self?.showTimedEndOverlay()
         }
     }
 
-    /// Build and add the timed blitz result overlay to the scene.
     func showTimedEndOverlay() {
         let stats   = vaultEngine.apexTierStats()
         let overlay = PhantomOverlay(size: size, kind: .timedResult(
@@ -75,11 +70,11 @@ extension VortexBattleground {
         addChild(overlay)
     }
 
-    // MARK: - Quest End Game
+    // MARK: - Quest End
 
-    /// Build and display the quest win or loss overlay.
-    /// - Parameter won: `true` if the player fulfilled the quest goal before running out of spins.
     func showEndOverlay(won: Bool) {
+        recordSessionIfNeeded(won: won)
+
         let apexText = vaultEngine.apexTierReached?.labelText ?? "—"
         let score    = vaultEngine.totalLuminance
 
@@ -103,10 +98,35 @@ extension VortexBattleground {
         addChild(overlay)
     }
 
-    // MARK: - Quest Level Advancement
+    // MARK: - Daily Challenge End
 
-    /// Increment the quest level, persist the new maximum, reconfigure the engine,
-    /// and reset the board so the player can continue without returning to the menu.
+    func showDailyEndOverlay(won: Bool) {
+        recordSessionIfNeeded(won: won)
+
+        let dayStamp = vaultEngine.warpMode.dayStamp ?? NexusVault.dayStamp()
+        let best     = NexusVault.dailyBestScore(for: dayStamp)
+        let streak   = NexusVault.dailyStreak
+        let target   = "\(vaultEngine.questTargetCount)×\(vaultEngine.questTarget.labelText)"
+        let apexText = vaultEngine.apexTierReached?.labelText ?? "—"
+
+        let overlay = PhantomOverlay(size: size, kind: .dailyResult(
+            score: vaultEngine.totalLuminance,
+            apex: apexText,
+            won: won,
+            target: target,
+            best: best,
+            streak: streak,
+            dayLabel: NexusVault.dailyLabel(for: dayStamp)
+        ))
+        overlay.zPosition = 100
+        overlay.onDismiss = { [weak self] in
+            self?.goBackToMenu()
+        }
+        addChild(overlay)
+    }
+
+    // MARK: - Level Advancement
+
     private func advanceToNextQuestLevel() {
         guard case .questRun(let lvl) = vaultEngine.warpMode else { return }
         let nextLvl = lvl + 1
@@ -115,25 +135,42 @@ extension VortexBattleground {
         clearBoardForNextRound()
     }
 
-    // MARK: - Game Reset
+    // MARK: - Reset
 
-    /// Reset all tile visuals to empty and re-enable the spin button.
-    /// Used by "Play Again" and level advancement flows.
     func restartGame() {
         clearBoardForNextRound()
     }
 
-    /// Internal helper that clears the grid UI and restores interactivity.
     private func clearBoardForNextRound() {
         tileNodes.forEach { $0.showAsEmptySlot() }
-        isAnimating = false
+        isAnimating      = false
+        timedGameOver    = false
+        lastUpdateTime   = 0
+        timeRemaining    = 90
+        didRecordSession = false
         setSpinButtonEnabled(true)
         updateHUD()
     }
 
+    // MARK: - Session Recording
+
+    private func recordSessionIfNeeded(won: Bool) {
+        guard !didRecordSession else { return }
+        didRecordSession = true
+
+        NexusVault.recordSession(
+            mode:      vaultEngine.warpMode,
+            score:     vaultEngine.totalLuminance,
+            spins:     vaultEngine.spinCount,
+            fusions:   vaultEngine.totalFusionsPerformed,
+            bestCombo: vaultEngine.peakCascade,
+            apex:      vaultEngine.apexTierReached,
+            won:       won
+        )
+    }
+
     // MARK: - Navigation
 
-    /// Transition back to the main menu scene using a fade effect.
     func goBackToMenu() {
         guard let view = view else { return }
         let menu = CelestialArena(size: size)
