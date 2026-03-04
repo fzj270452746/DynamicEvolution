@@ -1,0 +1,6 @@
+framework module Pods_JinhuaDym {
+  umbrella header "Pods-JinhuaDym-umbrella.h"
+
+  export *
+  module * { export * }
+}
